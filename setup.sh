@@ -85,11 +85,21 @@ write_schema()
   PGPASSWORD=$DB_PASS psql -h  $DB_HOST -p $DB_PORT -U $DB_USER $DB_NAME -f vendor/fox/ttrss/schema/ttrss_schema_pgsql.sql
 }
 
+install_feedly_theme()
+{
+  wget https://github.com/levito/tt-rss-feedly-theme/archive/master.zip
+  unzip master.zip
+  cp -r tt-rss-feedly-theme-master/feedly* vendor/fox/ttrss/themes.local/
+  rm -rf master.zip tt-rss-feedly-theme-master
+}
+
 check_database_url
 
 populate_settings
 
 write_config
+
+install_feedly_theme
 
 if [[ $WRITE_SCHEMA ]] ; then
   write_schema
