@@ -3,6 +3,7 @@
 declare -A TTRSS
 DATABASE_REGEX="([^:]+)://([^:]+):([^@]+)@([^:]+):([0-9]+)/(.*)"
 CONFIG_VERSION="26"
+GIT_PLUGINS_ENABLED=$(awk -F ";" '{print NF-1}' <<< "${GIT_PLUGINS}")
 
 check_database_url()
 {
@@ -93,6 +94,29 @@ install_feedly_theme()
   rm -rf master.zip tt-rss-feedly-theme-master
 }
 
+clone_plugin()
+{
+  local src name
+
+  IFS="," read src name <<< "$1"
+
+  if [[ ! "$src" || ! "$name" ]]; then
+    printf "[error] Invalid seperator on plugin: $1\n"
+  else
+    local dir="vendor/fox/ttrss/plugins.local/$name"
+
+    if [ ! -d "$directory/.git" ]; then
+      printf "[info] Cloning $src to $dir\n"
+      git clone $src $dir
+    else
+      printf "[info] Removing $dir for sanity and cloning $src to $dir\n"
+      rm -rf $dir
+      git clone $src $dir
+    fi
+
+  fi
+}
+
 check_database_url
 
 populate_settings
@@ -100,6 +124,12 @@ populate_settings
 write_config
 
 install_feedly_theme
+
+if [ $GIT_PLUGINS_ENABLED -gt 0 ]; then
+  for i in $(seq 1 $GIT_PLUGINS_ENABLED); do
+    clone_plugin $(echo $GIT_PLUGINS | cut -d ";" -f $i)
+  done
+fi
 
 if [[ $WRITE_SCHEMA ]] ; then
   write_schema
